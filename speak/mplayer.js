@@ -56,6 +56,7 @@ speak.prototype.exec = function(file, next) {
 
     var playerOptions = self.opts.playerOptions[self.opts.player] || {};
     var args = playerOptions.args || ['%file%'];
+    args = args.slice(0); // copy array
 
     var vars = _.extend(self.opts, { file: file });
     for (var i in vars)
@@ -81,3 +82,4 @@ speak.prototype.kill = function() {
 };
 
 module.exports = speak;
+
