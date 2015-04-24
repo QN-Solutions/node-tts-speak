@@ -24,6 +24,9 @@ var speak = function(options) {
             'mplayer': {
                 stdin: true,
                 volume: '-v'
+            },
+            'afplay': {
+                args: ['-v', '%volume%', '%file%']
             }
         },
         loglevel: 0
@@ -44,10 +47,22 @@ speak.prototype.exec = function(file, next) {
     if (!self.opts.player) {
         return next('No suitable audio player could be found - exiting.');
     }
-    
-    console.log(self.opts.player, ['-af', 'volume=0', file].join(' ')); 
 
-    self.proc = exec(self.opts.player, ['-af', 'volume=0', file], function(err) {
+    var playerOptions = self.opts.playerOptions[self.opts.player] || {};
+    var args = playerOptions.args || ['%file%'];
+
+    var vars = _.extend(self.opts, { file: file });
+    for (var i in vars)
+    {
+        for (var k in args)
+        {
+            args[k] = args[k].replace(new RegExp('%' + i + '%', 'g'), vars[i]);
+        }
+    }
+    
+    console.log(self.opts.player, args.join(' ')); 
+
+    self.proc = exec(self.opts.player, args, function(err) {
         if (_.isFunction(next)) next(err);
     });
     
@@ -56,7 +71,7 @@ speak.prototype.exec = function(file, next) {
 speak.prototype.kill = function() {
     var self = this;
     if (self.proc && (self.proc.exitCode === null)) {
-    	self.trace('Kill audio player'); 
+        self.trace('Kill audio player'); 
         self.proc.kill('SIGTERM');
     }
 };
