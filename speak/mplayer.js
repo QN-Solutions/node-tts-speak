@@ -26,6 +26,7 @@ var speak = function(options) {
                 volume: '-v'
             },
             'afplay': {
+                volume_multiplier: 0.01,
                 args: ['-v', '%volume%', '%file%']
             }
         },
@@ -34,7 +35,12 @@ var speak = function(options) {
 
 
     // Find a player if no one defined explicitely
-    if (self.opts.player) self.name = self.opts.player;
+    if (self.opts.player) {
+        self.name = self.opts.player;
+
+        if (self.opts.volume && self.opts.playerOptions[self.name] && self.opts.playerOptions[self.name].volume_multiplier)
+            self.opts.volume = self.opts.volume * self.opts.playerOptions[self.name].volume_multiplier;
+    }
 
     // Extends core with logger
     _.extend(self, Logger.builder('[tts-speak-'+self.name+']', self.opts.loglevel));
@@ -59,8 +65,6 @@ speak.prototype.exec = function(file, next) {
             args[k] = args[k].replace(new RegExp('%' + i + '%', 'g'), vars[i]);
         }
     }
-    
-    console.log(self.opts.player, args.join(' ')); 
 
     self.proc = exec(self.opts.player, args, function(err) {
         if (_.isFunction(next)) next(err);
